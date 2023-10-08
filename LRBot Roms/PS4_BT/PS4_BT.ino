@@ -56,24 +56,27 @@ void loop() {
           speedL = map(PS5.getAnalogButton(L2), 0, 255, 90, 0);
           ESC1.write(speedL);
           ESC2.write(speedL);
+          PS4.setLedFlash(100, 100);
         }
         else {
           if (PS5.getAnalogButton(R2)) {
             speedR = map(PS5.getAnalogButton(R2), 0, 255, 90, 180);
             ESC1.write(speedR);
             ESC2.write(speedR);
+            PS4.setLedFlash(10, 10);
           }
           else {
             speedR = 90;
             speedL = 90;
             ESC1.write(speedR);
             ESC2.write(speedL);
+            PS4.setLedFlash(0, 0);
           }
         }
       }
     }
       if(PS4.getButtonClick(SHARE)){
-      battlvl = getBatterylevel();
+      battlvl = PS4.getBatterylevel();
       Serial.println(battlvl);
       }
 
