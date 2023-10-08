@@ -13,7 +13,7 @@
 int max_bright = 100;          // максимальная яркость (0 - 255)
 boolean adapt_light = 0;       // адаптивная подсветка (1 - включить, 0 - выключить)
 
-byte fav_modes[] = {26, 888};  // список "любимых" режимов
+byte fav_modes[] = {7, 8, 26};  // список "любимых" режимов
 byte num_modes = sizeof(fav_modes);         // получить количество "любимых" режимов (они все по 1 байту..)
 unsigned long change_time, last_change, last_bright;
 int new_bright;
