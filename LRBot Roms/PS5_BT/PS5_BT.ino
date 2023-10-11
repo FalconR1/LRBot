@@ -6,23 +6,15 @@
 #include <SPI.h>
 #include <Servo.h>
 
-
-int mode = 0;  //режимы
-
-int start = 0;
-
-int lm = 0;
-int light = 0;
-
-Servo ESC1, ESC2, serv4;  //создаем ESC1
+//____ПЕРЕМЕННЫЕ____//
+Servo ESC1, ESC2;
 int speedR = 90;
 int speedL = 90;
-int BspeedR = 90;
-int BspeedL = 90;
-int speedOP = 90;
+int battlvl = 0;
+int leds = 0;
+int speedV = 0;
+//_________________//
 
-int s4pos = 0;
-//включаем bluetooth и пейрим геймпад
 USB Usb;
 BTD Btd(&Usb);
 PS5BT PS5(&Btd, PAIR);
@@ -35,212 +27,121 @@ bool microphone_led = false;
 uint32_t ps_timer;
 
 void setup() {
-  ESC1.attach(10, 1000, 2000);  //подключаем ESC1
-                               //1000 и 2000 это min и max ширина импульса PWM
-  ESC2.attach(11, 1000, 2000);
-
-  serv4.attach(4);
-
-  pinMode(A0, OUTPUT);
+  ESC1.attach(5, 1000, 2000); //подключаем ESC
+  ESC2.attach(6, 1000, 2000); //1000 и 2000 это min и max ширина импульса PWM
 
   Serial.begin(115200);
 #if !defined(__MIPSEL__)
-  while (!Serial)
-    ;  // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
+  while (!Serial);  // Wait for serial port to connect - used on Leonardo, Teensy and other boards with built-in USB CDC serial connection
 #endif
   if (Usb.Init() == -1) {
     Serial.print(F("\r\nOSC did not start"));
-    while (1)
-      ;  // Halt
+    while (1);
   }
-  Serial.print(F("\r\nPS5 Bluetooth Library Started"));  //это значит что все ок и bluetooth готов
+  Serial.println("Waiting for connection");  //это значит что все ок и bluetooth готов
 }
 
 void loop() {
   Usb.Task();
 
   if (PS5.connected() && lastMessageCounter != PS5.getMessageCounter()) {
-    //Serial.print("Successfully connected\n");
     lastMessageCounter = PS5.getMessageCounter();
-    PS5.setLed(255, 102, 0);  //цвет LED панели
+    PS5.setLed(Red);  //цвет LED панели
   }
-  /*else {
-    Serial.print("Waiting for connection\n");
-    delay(1000);
-  }*/
 
-  //JoySticks
-  /*if (PS5.getAnalogHat(LeftHatX) > 137 || PS5.getAnalogHat(LeftHatX) < 117 || PS5.getAnalogHat(LeftHatY) > 137 || PS5.getAnalogHat(LeftHatY) < 117 || PS5.getAnalogHat(RightHatX) > 137 || PS5.getAnalogHat(RightHatX) < 117 || PS5.getAnalogHat(RightHatY) > 137 || PS5.getAnalogHat(RightHatY) < 117) {
-      Serial.print(F("\r\nLeftHatX: "));
-      Serial.print(PS5.getAnalogHat(LeftHatX));
-      Serial.print(F("\tLeftHatY: "));
-      Serial.print(PS5.getAnalogHat(LeftHatY));
-      Serial.print(F("\tRightHatX: "));
-      Serial.print(PS5.getAnalogHat(RightHatX));
-      Serial.print(F("\tRightHatY: "));
-      Serial.print(PS5.getAnalogHat(RightHatY));
-
-      speed = map(PS5.getAnalogHat(RightHatY), 0, 255, -255, 255);
-      myservo.write(speed);
-    }*/
-    //Triggers
-  /*//Tank
-    if (PS5.getAnalogButton(R2)) {
-      Serial.print(F("\nR2: "));
-      Serial.print(PS5.getAnalogButton(R2));
-
-      speedR = PS5.getAnalogButton(R2);
-      speedR = map(PS5.getAnalogButton(R2), 0, 255, 90, 180);
-      ESC1.write(speedR);
-    } 
-    else {
-      if (PS5.getButtonPress(R1)) {
-        Serial.print("R1\n");
-        BspeedR = 0;
-        ESC1.write(BspeedR);
-      } 
-      else {
-        BspeedR = 90;
-        ESC1.write(BspeedR);
-      }
-    }
-     if (PS5.getAnalogButton(L2)) {
-      Serial.print(F("\nL2: "));
-      Serial.print(PS5.getAnalogButton(L2));
-       speedL = PS5.getAnalogButton(L2);
-      speedL = map(PS5.getAnalogButton(L2), 0, 255, 90, 180);
+    if (PS5.getAnalogHat(LeftHatX) > 137) {
+      speedL = map(PS5.getAnalogHat(LeftHatX), 138, 255, 91, 180); //Поворот направо
       ESC2.write(speedL);
-    } 
+      PS5.setLed(Yellow);
+      //PS5.setLedFlash(25, 25);
+    }
     else {
-      if (PS5.getButtonPress(L1)) {
-        Serial.print("L1\n");
-        BspeedL = 0;
-        ESC2.write(BspeedL);
-      } 
-      else {
-        BspeedL = 90;
-        ESC2.write(BspeedL);
+      if (PS5.getAnalogHat(LeftHatX) < 117) {
+        speedR = map(PS5.getAnalogHat(LeftHatX), 0, 116, 180, 91); //Поворот налево
+        ESC1.write(speedR);
+        PS5.setLed(Yellow);
+        //PS5.setLedFlash(25, 25); 
       }
-    }*/
-  //GTA
-  if (PS5.getAnalogButton(R2)) {
-          Serial.print(F("\nR2: "));
-          Serial.print(PS5.getAnalogButton(R2));
-
-          speedR = PS5.getAnalogButton(R2);
-          speedR = map(PS5.getAnalogButton(R2), 0, 255, 90, 180);
+      else {
+        if (PS5.getAnalogHat(RightHatX) > 137 || PS5.getAnalogHat(RightHatX) < 117) {
+          speedR = map(PS5.getAnalogHat(RightHatX), 0, 255, 180, 0); //Развороты
+          speedL = map(PS5.getAnalogHat(RightHatX), 0, 255, 0, 180);
           ESC1.write(speedR);
-          ESC2.write(speedR);
+          ESC2.write(speedL);
+          PS5.setLed(Yellow);
+          //PS5.setLedFlash(10, 10);
         }
         else {
-          if (PS5.getAnalogButton(L2)) {
-          Serial.print(F("\nL2: "));
-          Serial.print(PS5.getAnalogButton(L2));
-
-          speedL = PS5.getAnalogButton(L2);
-          speedL = map(PS5.getAnalogButton(L2), 0, 255, 90, 0);
-          ESC1.write(speedL);
-          ESC2.write(speedL);
+          if (PS5.getButtonPress(L1)) { //Поворот направо задний ход
+            ESC2.write(0);
+            PS5.setLed(White);
+            //PS5.setLedFlash(25, 25);
           }
           else {
-            if (PS5.getAnalogHat(LeftHatX) > 137 || PS5.getAnalogHat(LeftHatX) < 117) {
-              speedR = PS5.getAnalogHat(LeftHatX);
-              speedR = map(PS5.getAnalogHat(LeftHatX), 0, 255, 180, 0);
-              speedL = PS5.getAnalogHat(LeftHatX);
-              speedL = map(PS5.getAnalogHat(LeftHatX), 0, 255, 0, 180);
-              ESC1.write(speedR);
-              ESC2.write(speedL);
+            if (PS5.getButtonPress(R1)) { //Поворот налево задний ход
+              ESC1.write(0);
+              PS5.setLed(White);
+              //PS5.setLedFlash(25, 25);
             }
             else {
-              speedR = 90;
-              speedL = 90;
-              ESC1.write(speedR);
-              ESC2.write(speedL);
+              if (PS5.getAnalogButton(L2)) {
+                speedL = map(PS5.getAnalogButton(L2), 0, 255, 89, 0); //Задний ход
+                ESC1.write(speedL);
+                ESC2.write(speedL);
+                PS5.setLed(Red);
+                //PS5.setLedFlash(25, 25);
+              }
+              else {
+                if (PS5.getAnalogButton(R2)) {
+                  speedR = map(PS5.getAnalogButton(R2), 0, 255, 91, 150); //Движение вперед
+                  ESC1.write(speedR);
+                  ESC2.write(speedR);
+                  PS5.setLed(Red);
+                  /*speedV = speedR / 18 - 5;
+                  //Serial.println(speedV);
+                  leds = 0;
+                  for (int i = 0; i < speedV; i++) {
+                    leds = leds << 1 + 1;
+                    //Serial.println(leds);
+                    PS5.setPlayerLed(leds);
+                  }
+                  Serial.println(leds);
+                
+                }*/
+                if (speedR >= 102) {
+                  PS5.setPlayerLed(1);
+                  if (speedR >= 114) {
+                    PS5.setPlayerLed(3);
+                    if (speedR >= 126) {
+                      PS5.setPlayerLed(7);
+                      if (speedR >= 135) {
+                        PS5.setPlayerLed(15);
+                        if (speedR >= 140) {
+                          PS5.setPlayerLed(31);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+                else {
+                  speedR = 90; //Автотормоз
+                  speedL = 90;
+                  ESC1.write(speedR);
+                  ESC2.write(speedL);
+                  PS5.setLed(Red);
+                  PS5.setPlayerLedOff();
+                  //PS5.setLedFlash(0, 0);
+                }
+              }
             }
           }
         }
-  
-  //Special Buttons
-  /*digitalWrite(A0, lm);
-  if (PS5.getButtonClick(CREATE)) {
-    light++;
-    switch (light){
-      case 0: lm = 0; Serial.print("0"); break;
-      case 1: lm = 0; Serial.print("устраняем ебанутость"); break;
-      case 2: lm = 1; Serial.print("1"); break;
-      case 3: lm = 0; light = 1; break;
+      }
     }
-  }
-
-  if (PS5.getButtonClick(OPTIONS)) {
-    mode++;
-    switch (mode) {
-      case 0: PS5.setPlayerLed(0); break;
-      case 1: PS5.setPlayerLed(1); break;
-      case 2: PS5.setPlayerLed(3); break;
-      case 3: PS5.setPlayerLed(7); break;
-      case 4: PS5.setPlayerLed(15); break;
-      case 5: PS5.setPlayerLed(31); break;
-      case 6:
-        PS5.setPlayerLed(0);
-        mode = 0;
-        break;
+    if (PS5.getButtonClick(OPTIONS)) { //Отключение геймпада
+      Serial.println("Disconnect");
+      PS5.disconnect(); 
     }
-  }
-  }
-  /*if (PS5.getButtonClick(PS)){  //mods?
-  player_led_mask = (player_led_mask << 1) | 1;
-    if (player_led_mask > 0x1F)
-      player_led_mask = 0;
-      PS5.setPlayerLed(player_led_mask); //The bottom 5 bits set player LEDs
-      Serial.print(player_led_mask);
-      Serial.print("\n");
-}
-*/
-  //Right Cross
-  /*if (PS5.getButtonClick(TRIANGLE)) {
-    start = 1;
-  }
-  if (PS5.getButtonClick(CIRCLE)) {
-    //do
-  }
-  if (PS5.getButtonClick(CROSS)) {
-    start = 0;
-    //do
-  }
-  if (PS5.getButtonClick(SQUARE)) {
-    //do
-  }
 
-  //Left Cross
-  if (PS5.getButtonClick(UP)) {
-    //do
-  }
-  if (PS5.getButtonClick(RIGHT)) {
-    //do
-  }
-  if (PS5.getButtonClick(DOWN)) {
-    //do
-  }
-  if (PS5.getButtonClick(LEFT)) {
-    //do
-  }
-
-}
-void line(){
-  int l,r;
-  l = !digitalRead(LineL);
-  r = !digitalRead(LineR);
-  if (l == r){
-    ESC1.write(140);
-    ESC2.write(140);
-  }
- else if (l == 1  && r == 0){
-    ESC1.write(140);
-    ESC2.write(40);
- }
- else if (l == 0  && r == 1){
-    ESC1.write(40);
-    ESC2.write(140);
- }*/
 }
